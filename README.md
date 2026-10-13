@@ -32,6 +32,18 @@ App chỉ cần một Postgres; đăng nhập là JWT của app nên không dùn
 4. Migration `enable_rls` bật Row Level Security cho mọi bảng (không policy) để khoá `anon`/`authenticated` của Data API; app kết nối bằng quyền chủ bảng nên không bị ảnh hưởng. Bảng mới thêm sau này cần thêm dòng `ENABLE ROW LEVEL SECURITY` trong migration của nó. Có thể tắt luôn Data API ở Settings, API.
 5. `npm test` từ chối chạy khi `DATABASE_URL` không phải Postgres cục bộ, vì test xoá dữ liệu trong schema `test`.
 
+## Ảnh tải lên và nhắc chuyến đi chạy nền (Phase 4)
+
+**Tải ảnh (Supabase Storage).** Ảnh đánh giá được tải lên qua `POST /api/uploads` (JPEG/PNG/WebP, tối đa 5 MB, kiểm tra loại bằng nội dung file chứ không tin tên/loại từ trình duyệt, tối đa 20 ảnh/giờ/người). Khoá `service_role` chỉ nằm ở server.
+1. Supabase Dashboard, Storage: tạo bucket tên `review-photos`, bật **Public bucket**; ở phần cài đặt bucket đặt giới hạn 5 MB và chỉ cho `image/jpeg, image/png, image/webp` (lớp bảo vệ thứ hai).
+2. Đặt `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Settings, API, `service_role`, **bí mật**, không bao giờ để trong biến `NEXT_PUBLIC_*`) và tuỳ chọn `SUPABASE_STORAGE_BUCKET`. Chưa đặt thì form đánh giá vẫn dùng ô dán link ảnh https như trước.
+3. File nằm ở `reviews/<userId>/<uuid>.<ext>`. Mỗi người chỉ gắn và xoá được ảnh trong thư mục của mình; xoá đánh giá hoặc đổi sang ảnh khác thì file cũ bị xoá. Ảnh tải lên nhưng không bấm gửi đánh giá sẽ còn lại trong bucket (chưa có job dọn).
+
+**Nhắc chuyến đi chạy nền.** `POST|GET /api/cron/reminders` tạo nhắc cho mọi người (chủ và thành viên) có chuyến đi khởi hành trong 3 ngày, không cần ai mở app; chạy lại bao nhiêu lần cũng không trùng. Endpoint tắt (503) nếu chưa đặt `CRON_SECRET` và yêu cầu header `Authorization: Bearer <CRON_SECRET>`.
+- Đặt `CRON_SECRET` (`openssl rand -base64 32`) trong biến môi trường của app.
+- Workflow `.github/workflows/reminders.yml` gọi endpoint mỗi giờ: thêm secret `APP_URL` (ví dụ `https://tripmate.example.com`) và `CRON_SECRET` (cùng giá trị) trong GitHub, Settings, Secrets. Chưa có secret thì workflow tự bỏ qua. Dùng Vercel Cron cũng được (nó gửi GET kèm đúng header đó).
+- Thông báo hiện trong chuông của app; chưa gửi email/push.
+
 ## Tính năng MVP
 
 | Module | Nội dung |
@@ -50,6 +62,7 @@ App chỉ cần một Postgres; đăng nhập là JWT của app nên không dùn
 | Cộng tác (P3) | Chủ chuyến đi mời bạn bè bằng link `/invite/<token>` với quyền Chỉnh sửa hoặc Chỉ xem; chủ đổi quyền/xoá thành viên, thành viên tự rời; kiểm tra quyền ở mọi API của chuyến đi |
 | Chia tiền nhóm (P3) | Mỗi khoản chi chọn người trả và chia đều cho ai (mặc định cả nhóm); tab Ngân sách hiện ai trả ai bao nhiêu để cân bằng (số tiền nguyên, tối thiểu số lần chuyển). Chỉ tính khoản có số tiền thực tế và đã chọn người trả; xoá thành viên thì họ bị gỡ khỏi người trả/chia cho của chuyến đó |
 | Bình chọn & bình luận (P3) | Trên từng địa điểm trong lịch trình: 👍 muốn đi / 👎 nên bỏ (mỗi người một phiếu, bấm lại để bỏ phiếu) và thảo luận; thành viên Chỉnh sửa được bình chọn và bình luận, Chỉ xem chỉ đọc; tác giả hoặc chủ xoá được bình luận |
+| Ảnh & nhắc nền (P4) | Tải ảnh đánh giá lên Supabase Storage; cron nhắc chuyến đi cho cả thành viên (xem mục Phase 4) |
 | Nền tảng | Zod validation, rate limit (in-memory), Dockerfile, CI (typecheck/lint/migrate/build) |
 
 ## Test
@@ -63,13 +76,12 @@ Test API tập trung vào phân quyền: truy cập chéo user (IDOR), admin-onl
 
 ## API (rút gọn)
 
-`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `PUT /api/trips/:id/items/:itemId/vote` · `GET|POST /api/trips/:id/items/:itemId/comments` · `DELETE /api/trips/:id/comments/:commentId` · `POST /api/trips/:id/invite` · `PATCH|DELETE /api/trips/:id/members/:userId` · `GET /api/invites/:token` · `POST /api/invites/:token/join` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
+`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `PUT /api/trips/:id/items/:itemId/vote` · `GET|POST /api/uploads` · `POST|GET /api/cron/reminders` · `GET|POST /api/trips/:id/items/:itemId/comments` · `DELETE /api/trips/:id/comments/:commentId` · `POST /api/trips/:id/invite` · `PATCH|DELETE /api/trips/:id/members/:userId` · `GET /api/invites/:token` · `POST /api/invites/:token/join` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
 
 ## Hạn chế đã biết / bước tiếp theo
 
 - Rate limit lưu trong bộ nhớ → chuyển Redis khi chạy nhiều instance.
 - Routing dùng OSRM demo công cộng (`router.project-osrm.org`, không đảm bảo SLA) – production nên tự host và đặt `OSRM_URL`.
-- Ảnh review mới nhận link https; upload file cần object storage (Phase 4).
 - Điểm đánh giá seed ban đầu bị thay bằng trung bình thực khi có review đầu tiên.
-- Thông báo tạo lười khi người dùng mở app; Phase 4 chuyển sang background job.
+- Nhắc chuyến đi chỉ hiện trong app (chưa có email/push); ảnh tải lên mà không gửi đánh giá chưa có job dọn.
 - Tiếp theo: AI, Weather…
