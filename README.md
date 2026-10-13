@@ -34,6 +34,15 @@ npm run dev                     # http://localhost:3000
 | Routing (P2) | Tuyến đường lái xe thật + thời gian theo ngày qua OSRM; tự động fallback đường chim bay |
 | Nền tảng | Zod validation, rate limit (in-memory), Dockerfile, CI (typecheck/lint/migrate/build) |
 
+## Test
+
+```bash
+npm test              # Vitest: unit + API (gọi trực tiếp route handler, Postgres thật, schema "test" riêng – không đụng dữ liệu dev)
+npm run build && npm run test:e2e   # Playwright (cần DB đã migrate + seed; PW_CHROMIUM=/đường/dẫn/chromium nếu không dùng `npx playwright install`)
+```
+
+Test API tập trung vào phân quyền: truy cập chéo user (IDOR), admin-only, link chia sẻ không lộ dữ liệu, rate limit.
+
 ## API (rút gọn)
 
 `POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
@@ -45,5 +54,4 @@ npm run dev                     # http://localhost:3000
 - Ảnh review mới nhận link https; upload file cần object storage (Phase 4).
 - Điểm đánh giá seed ban đầu bị thay bằng trung bình thực khi có review đầu tiên.
 - Thông báo tạo lười khi người dùng mở app; Phase 4 chuyển sang background job.
-- Chưa có test tự động; nên thêm Vitest (validators/geo) + Playwright (luồng chính).
 - Tiếp theo: Collaborative trip (Owner/Editor/Viewer), Comments/Voting, Expense splitting, AI, Weather…
