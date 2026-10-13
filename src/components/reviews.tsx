@@ -17,6 +17,18 @@ export function Reviews({ destinationId, user }: { destinationId: string; user: 
   const [comment, setComment] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const { data: up } = useQuery({ queryKey: ["uploads-enabled"], queryFn: () => api<{ enabled: boolean }>("/api/uploads"), enabled: !!user, staleTime: 3_600_000 });
+  const upload = async (file: File) => {
+    setUploading(true); setError("");
+    try {
+      const body = new FormData(); body.append("file", file);
+      const res = await fetch("/api/uploads", { method: "POST", body });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((json as { error?: string }).error ?? `Upload failed (${res.status})`);
+      setImageUrl((json as { url: string }).url);
+    } catch (e) { setError((e as Error).message); } finally { setUploading(false); }
+  };
 
   const done = () => { qc.invalidateQueries({ queryKey: key }); router.refresh(); }; // refresh server-rendered avg rating
   const save = useMutation({
@@ -38,9 +50,24 @@ export function Reviews({ destinationId, user }: { destinationId: string; user: 
             ))}
           </div>
           <textarea className="input" rows={3} required maxLength={1000} placeholder="Chia sẻ trải nghiệm của bạn…" value={comment} onChange={(e) => setComment(e.target.value)} />
-          <input className="input" type="url" placeholder="Link ảnh (https://…, tuỳ chọn)" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+          {up?.enabled ? (
+            <div className="space-y-2">
+              <label className="label">Ảnh (JPEG, PNG, WebP, tối đa 5 MB, tuỳ chọn)</label>
+              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
+              {uploading && <p className="text-xs text-slate-500">Đang tải ảnh lên…</p>}
+              {imageUrl && (
+                <div className="flex items-end gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imageUrl} alt="Ảnh đã tải lên" className="max-h-24 rounded-lg" />
+                  <button type="button" className="btn-ghost" onClick={() => setImageUrl("")}>Bỏ ảnh</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <input className="input" type="url" placeholder="Link ảnh (https://…, tuỳ chọn)" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+          )}
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button className="btn" disabled={save.isPending}>{mine ? "Cập nhật" : "Gửi đánh giá"}</button>
+          <button className="btn" disabled={save.isPending || uploading}>{mine ? "Cập nhật" : "Gửi đánh giá"}</button>
         </form>
       ) : (
         <p className="text-sm text-slate-500">Đăng nhập để viết đánh giá.</p>
