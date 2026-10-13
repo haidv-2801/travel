@@ -27,15 +27,23 @@ npm run dev                     # http://localhost:3000
 | Ngân sách | Dự kiến vs thực tế, theo loại, biểu đồ, còn lại/vượt ngân sách |
 | Bản đồ | Marker đánh số, đường nối, khoảng cách theo ngày (đường chim bay) |
 | Admin | CRUD địa điểm, danh mục, đổi quyền người dùng |
+| Yêu thích (P2) | Lưu/bỏ lưu địa điểm, trang `/favorites` |
+| Đánh giá (P2) | 1–5 sao + bình luận + ảnh (link https); mỗi user 1 đánh giá/địa điểm; điểm trung bình tự cập nhật |
+| Chia sẻ & PDF (P2) | Link công khai chỉ-đọc `/s/<token>` (bật/tắt được, không lộ chi phí), sao chép lịch trình về tài khoản, xuất PDF qua `/trips/:id/print` |
+| Thông báo (P2) | Chuông trong app, nhắc chuyến đi sắp khởi hành (≤3 ngày), chống trùng |
+| Routing (P2) | Tuyến đường lái xe thật + thời gian theo ngày qua OSRM; tự động fallback đường chim bay |
 | Nền tảng | Zod validation, rate limit (in-memory), Dockerfile, CI (typecheck/lint/migrate/build) |
 
 ## API (rút gọn)
 
-`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id`
+`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
 
 ## Hạn chế đã biết / bước tiếp theo
 
 - Rate limit lưu trong bộ nhớ → chuyển Redis khi chạy nhiều instance.
-- Khoảng cách là đường chim bay; routing thật dùng OSRM ở Phase 2.
+- Routing dùng OSRM demo công cộng (`router.project-osrm.org`, không đảm bảo SLA) – production nên tự host và đặt `OSRM_URL`.
+- Ảnh review mới nhận link https; upload file cần object storage (Phase 4).
+- Điểm đánh giá seed ban đầu bị thay bằng trung bình thực khi có review đầu tiên.
+- Thông báo tạo lười khi người dùng mở app; Phase 4 chuyển sang background job.
 - Chưa có test tự động; nên thêm Vitest (validators/geo) + Playwright (luồng chính).
-- Phase 2+: Favorites, Sharing, Reviews, Collaborative trip, Expense splitting, AI…
+- Tiếp theo: Collaborative trip (Owner/Editor/Viewer), Comments/Voting, Expense splitting, AI, Weather…

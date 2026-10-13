@@ -11,3 +11,9 @@
   .label { @apply mb-1 block text-xs font-medium text-slate-600; }
 }
 .leaflet-container { z-index: 0; }
+
+@media print {
+  header, .no-print { display: none !important; }
+  body { background: #fff; }
+  .card { box-shadow: none; break-inside: avoid; }
+}

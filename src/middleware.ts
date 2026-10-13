@@ -14,4 +14,4 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/trips/:path*", "/admin/:path*"] };
+export const config = { matcher: ["/trips/:path*", "/admin/:path*", "/favorites/:path*"] };

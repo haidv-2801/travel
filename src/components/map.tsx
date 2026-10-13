@@ -22,7 +22,9 @@ function Fit({ points }: { points: MapPoint[] }) {
   return null;
 }
 
-export default function Map({ points, line = false, height = 360 }: { points: MapPoint[]; line?: boolean; height?: number }) {
+export type MapLine = { positions: [number, number][]; dashed?: boolean };
+
+export default function Map({ points, lines = [], height = 360 }: { points: MapPoint[]; lines?: MapLine[]; height?: number }) {
   return (
     <MapContainer center={[16, 106]} zoom={5} style={{ height, width: "100%" }} className="rounded-xl border">
       <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -31,7 +33,7 @@ export default function Map({ points, line = false, height = 360 }: { points: Ma
           <Popup>{p.label}</Popup>
         </Marker>
       ))}
-      {line && points.length > 1 && <Polyline positions={points.map((p) => [p.lat, p.lng] as [number, number])} pathOptions={{ color: "#0891b2", weight: 3, dashArray: "6" }} />}
+      {lines.map((l, i) => <Polyline key={i} positions={l.positions} pathOptions={{ color: "#0891b2", weight: l.dashed ? 3 : 4, dashArray: l.dashed ? "6" : undefined }} />)}
       <Fit points={points} />
     </MapContainer>
   );

@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { vnd } from "@/lib/api";
 import { TripMap } from "@/components/map-dynamic";
 import { AddToTrip } from "@/components/add-to-trip";
+import { FavoriteButton } from "@/components/favorite-button";
+import { Reviews } from "@/components/reviews";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   if (!d) notFound();
   const user = await getCurrentUser();
   const trips = user ? await db.trip.findMany({ where: { userId: user.id }, orderBy: { startDate: "desc" }, select: { id: true, title: true, startDate: true, endDate: true } }) : [];
+  const isFav = user ? !!(await db.favorite.findUnique({ where: { userId_destinationId: { userId: user.id, destinationId: d.id } } })) : false;
   const nearby = await db.destination.findMany({ where: { city: { not: d.city }, region: d.region, id: { not: d.id } }, take: 3, orderBy: { rating: "desc" } });
 
   return (
@@ -27,9 +30,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           </div>
           <p className="text-slate-700">{d.description}</p>
           <div className="flex gap-6 text-sm">
-            <span className="text-amber-600">★ {d.rating.toFixed(1)}</span>
+            <span className="text-amber-600">★ {d.rating.toFixed(1)} <span className="text-slate-400">({d.reviewCount})</span></span>
             <span>Chi phí ước tính: <b>{vnd(d.avgCost)}</b>/người</span>
           </div>
+          <FavoriteButton destinationId={d.id} initial={isFav} loggedIn={!!user} />
           {user ? (
             <AddToTrip destinationId={d.id} trips={trips.map((t) => ({ id: t.id, title: t.title, days: Math.round((+t.endDate - +t.startDate) / 86_400_000) + 1 }))} />
           ) : (
@@ -48,6 +52,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           <TripMap points={[{ lat: d.lat, lng: d.lng, label: d.name }]} height={320} />
         </div>
       </div>
+      <Reviews destinationId={d.id} user={user ? { id: user.id, role: user.role } : null} />
     </div>
   );
 }
