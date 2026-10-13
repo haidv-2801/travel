@@ -25,6 +25,18 @@ describe("balances", () => {
   });
 });
 
+describe("balances with exact shares", () => {
+  it("each person owes their own amount and the payer is credited the full cost", () => {
+    const n = balances([{ actual: 1000, paidById: "a", splitAmong: [], shareAmounts: { a: 500, b: 300, c: 200 } }], P);
+    expect(n).toEqual({ a: 500, b: -300, c: -200 });
+    expect(sum(n)).toBe(0);
+  });
+  it("mixes with equal-split expenses", () => {
+    const n = balances([{ actual: 300, paidById: "a", splitAmong: [] }, { actual: 100, paidById: "b", splitAmong: ["b", "c"], shareAmounts: { b: 10, c: 90 } }], P);
+    expect(n).toEqual({ a: 200, b: -100 + 100 - 10, c: -100 - 90 });
+  });
+});
+
 describe("settle", () => {
   it("returns nothing when everyone is even", () => expect(settle({ a: 0, b: 0 })).toEqual([]));
   it("one debtor pays one creditor", () => expect(settle({ a: 100, b: -100 })).toEqual([{ from: "b", to: "a", amount: 100 }]));

@@ -145,6 +145,7 @@ model Expense {
 model ExpenseShare {
   expenseId String
   userId    String
+  amount    Int? // exact share in VND; null = equal part (all shares of one expense are either exact or equal)
   expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 

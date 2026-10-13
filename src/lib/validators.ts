@@ -58,6 +58,7 @@ export const expenseSchema = z.object({
   actual: z.number().int().min(0).default(0),
   paidById: z.string().min(1).nullish(), // trip participant who paid
   splitAmong: z.array(z.string().min(1)).max(50).optional(), // participants sharing it; empty = everyone
+  shareAmounts: z.record(z.string().min(1), z.number().int().min(0)).optional(), // exact VND per person (must add up to `actual`); {} = back to equal split
 });
 export const expenseUpdateSchema = expenseSchema.partial();
 
