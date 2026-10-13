@@ -29,6 +29,8 @@ model User {
   reviews      Review[]
   notifications Notification[]
   memberships  TripMember[]
+  paidExpenses Expense[]      @relation("ExpensePayer")
+  expenseShares ExpenseShare[]
 }
 
 model Category {
@@ -103,9 +105,22 @@ model Expense {
   category  String // transport | food | lodging | tickets | other
   planned   Int      @default(0)
   actual    Int      @default(0)
+  paidById  String? // who actually paid (null = not tracked for splitting)
+  paidBy    User?    @relation("ExpensePayer", fields: [paidById], references: [id], onDelete: SetNull)
+  shares    ExpenseShare[] // who it is split between; empty = everyone in the trip
   createdAt DateTime @default(now())
 
   @@index([tripId])
+}
+
+model ExpenseShare {
+  expenseId String
+  userId    String
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([expenseId, userId])
+  @@index([userId])
 }
 
 model Favorite {

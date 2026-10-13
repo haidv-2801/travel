@@ -33,6 +33,7 @@ npm run dev                     # http://localhost:3000
 | Thông báo (P2) | Chuông trong app, nhắc chuyến đi sắp khởi hành (≤3 ngày), chống trùng |
 | Routing (P2) | Tuyến đường lái xe thật + thời gian theo ngày qua OSRM; tự động fallback đường chim bay |
 | Cộng tác (P3) | Chủ chuyến đi mời bạn bè bằng link `/invite/<token>` với quyền Chỉnh sửa hoặc Chỉ xem; chủ đổi quyền/xoá thành viên, thành viên tự rời; kiểm tra quyền ở mọi API của chuyến đi |
+| Chia tiền nhóm (P3) | Mỗi khoản chi chọn người trả và chia đều cho ai (mặc định cả nhóm); tab Ngân sách hiện ai trả ai bao nhiêu để cân bằng (số tiền nguyên, tối thiểu số lần chuyển). Chỉ tính khoản có số tiền thực tế và đã chọn người trả; xoá thành viên thì họ bị gỡ khỏi người trả/chia cho của chuyến đó |
 | Nền tảng | Zod validation, rate limit (in-memory), Dockerfile, CI (typecheck/lint/migrate/build) |
 
 ## Test
@@ -55,4 +56,4 @@ Test API tập trung vào phân quyền: truy cập chéo user (IDOR), admin-onl
 - Ảnh review mới nhận link https; upload file cần object storage (Phase 4).
 - Điểm đánh giá seed ban đầu bị thay bằng trung bình thực khi có review đầu tiên.
 - Thông báo tạo lười khi người dùng mở app; Phase 4 chuyển sang background job.
-- Tiếp theo: Comments/Voting, Expense splitting, AI, Weather…
+- Tiếp theo: Comments/Voting, AI, Weather…

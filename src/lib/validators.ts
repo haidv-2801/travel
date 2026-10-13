@@ -56,6 +56,8 @@ export const expenseSchema = z.object({
   category: z.enum(EXPENSE_CATEGORIES),
   planned: z.number().int().min(0).default(0),
   actual: z.number().int().min(0).default(0),
+  paidById: z.string().min(1).nullish(), // trip participant who paid
+  splitAmong: z.array(z.string().min(1)).max(50).optional(), // participants sharing it; empty = everyone
 });
 export const expenseUpdateSchema = expenseSchema.partial();
 
