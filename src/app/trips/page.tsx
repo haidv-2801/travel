@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { api, vnd } from "@/lib/api";
 
-type TripRow = { id: string; title: string; startDate: string; endDate: string; budget: number; days: number; _count: { items: number } };
+type TripRow = { id: string; title: string; startDate: string; endDate: string; budget: number; days: number; shared?: boolean; _count: { items: number } };
 type FormValues = { title: string; startDate: string; endDate: string; budget: number };
 
 export default function TripsPage() {
@@ -46,11 +46,11 @@ export default function TripsPage() {
         {trips?.map((t) => (
           <div key={t.id} className="card">
             <Link href={`/trips/${t.id}`} className="block">
-              <h2 className="font-semibold hover:text-brand-600">{t.title}</h2>
+              <h2 className="font-semibold hover:text-brand-600">{t.title} {t.shared && <span className="ml-1 rounded bg-brand-50 px-1.5 py-0.5 text-xs font-normal text-brand-600">Được mời</span>}</h2>
               <p className="text-xs text-slate-500">{new Date(t.startDate).toLocaleDateString("vi-VN")} – {new Date(t.endDate).toLocaleDateString("vi-VN")} · {t.days} ngày</p>
               <p className="mt-2 text-sm">{t._count.items} địa điểm · Ngân sách {vnd(t.budget)}</p>
             </Link>
-            <button className="btn-danger mt-2" onClick={() => confirm("Xoá chuyến đi này?") && remove.mutate(t.id)}>Xoá</button>
+            {!t.shared && <button className="btn-danger mt-2" onClick={() => confirm("Xoá chuyến đi này?") && remove.mutate(t.id)}>Xoá</button>}
           </div>
         ))}
       </div>

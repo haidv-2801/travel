@@ -8,8 +8,10 @@ import { DayBoard, type Item } from "@/components/day-board";
 import { BudgetPanel, type Expense } from "@/components/budget-panel";
 import { TripMap } from "@/components/map-dynamic";
 import { SharePanel } from "@/components/share-panel";
+import { MembersPanel, type Member } from "@/components/members-panel";
 
-type Trip = { id: string; title: string; startDate: string; endDate: string; budget: number; shareToken: string | null; days: number; items: Item[]; expenses: Expense[] };
+type Trip = { id: string; title: string; startDate: string; endDate: string; budget: number; shareToken: string | null; days: number; myRole: "OWNER" | "EDITOR" | "VIEWER"; user: { id: string; name: string }; members: Member[]; inviteToken?: string | null; inviteRole?: "EDITOR" | "VIEWER"; items: Item[]; expenses: Expense[] };
+type Me = { id: string };
 type Dest = { id: string; name: string; city: string };
 
 export default function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +23,7 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
   const [q, setQ] = useState("");
   const [addDay, setAddDay] = useState(1);
 
+  const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => api<{ user: Me | null }>("/api/auth/me") });
   const { data: trip, error } = useQuery({ queryKey: key, queryFn: () => api<Trip>(`/api/trips/${id}`) });
   const { data: results } = useQuery({
     queryKey: ["dest-search", q],
@@ -68,6 +71,9 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
   if (error) return <p className="text-red-600">{(error as Error).message}. <Link className="underline" href="/trips">Quay lại</Link></p>;
   if (!trip) return <p className="text-slate-500">Đang tải…</p>;
 
+  const canEdit = trip.myRole !== "VIEWER";
+  const lock = canEdit ? "" : "pointer-events-none select-none opacity-90";
+
   return (
     <div className="space-y-5">
       <div>
@@ -75,7 +81,9 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
         <h1 className="text-2xl font-bold">{trip.title}</h1>
         <p className="text-sm text-slate-500">{new Date(trip.startDate).toLocaleDateString("vi-VN")} – {new Date(trip.endDate).toLocaleDateString("vi-VN")} · {trip.days} ngày · Ngân sách {vnd(trip.budget)}</p>
       </div>
-      <SharePanel tripId={trip.id} initialToken={trip.shareToken} />
+      {trip.myRole === "OWNER" && <SharePanel tripId={trip.id} initialToken={trip.shareToken} />}
+      {me?.user && <MembersPanel tripId={trip.id} myId={me.user.id} myRole={trip.myRole} owner={trip.user} members={trip.members} inviteToken={trip.inviteToken} inviteRole={trip.inviteRole} />}
+      {!canEdit && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">Bạn chỉ có quyền xem chuyến đi này.</p>}
       <div className="flex gap-2">
         {(["plan", "budget"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`rounded-lg px-4 py-1.5 text-sm ${tab === t ? "bg-brand-600 text-white" : "bg-white border"}`}>{t === "plan" ? "Lịch trình" : "Ngân sách"}</button>
@@ -83,11 +91,11 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {tab === "budget" ? (
-        <BudgetPanel budget={trip.budget} expenses={trip.expenses} onAdd={(e) => addExpense.mutateAsync(e)} onUpdate={(eid, patch) => updExpense.mutate({ eid, patch })} onDelete={(eid) => delExpense.mutate(eid)} onBudget={(b) => setBudget.mutate(b)} />
+        <fieldset disabled={!canEdit} className={lock}><BudgetPanel budget={trip.budget} expenses={trip.expenses} onAdd={(e) => addExpense.mutateAsync(e)} onUpdate={(eid, patch) => updExpense.mutate({ eid, patch })} onDelete={(eid) => delExpense.mutate(eid)} onBudget={(b) => setBudget.mutate(b)} /></fieldset>
       ) : (
         <div className="grid gap-5 lg:grid-cols-5">
           <div className="space-y-4 lg:col-span-3">
-            <div className="card space-y-2">
+            {canEdit && <div className="card space-y-2">
               <div className="flex gap-2">
                 <input className="input" placeholder="Tìm địa điểm để thêm…" value={q} onChange={(e) => setQ(e.target.value)} />
                 <select className="input w-32" value={addDay} onChange={(e) => setAddDay(Number(e.target.value))}>
@@ -101,8 +109,8 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               ))}
               {addItem.error && <p className="text-sm text-red-600">{(addItem.error as Error).message}</p>}
-            </div>
-            <DayBoard items={trip.items} days={trip.days} onChange={(l) => reorder.mutate(l)} onRemove={(iid) => removeItem.mutate(iid)} />
+            </div>}
+            <div className={lock}><DayBoard items={trip.items} days={trip.days} onChange={(l) => reorder.mutate(l)} onRemove={(iid) => removeItem.mutate(iid)} /></div>
           </div>
           <div className="space-y-3 lg:col-span-2">
             <div className="flex items-center gap-2">

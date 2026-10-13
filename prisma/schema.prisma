@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TripRole {
+  EDITOR
+  VIEWER
+}
+
 enum Role {
   USER
   ADMIN
@@ -23,6 +28,7 @@ model User {
   favorites    Favorite[]
   reviews      Review[]
   notifications Notification[]
+  memberships  TripMember[]
 }
 
 model Category {
@@ -68,6 +74,9 @@ model Trip {
   items     TripItem[]
   expenses  Expense[]
   shareToken String?   @unique // set => publicly viewable read-only at /s/<token>
+  inviteToken String?  @unique // set => anyone with the link (signed in) can join with inviteRole
+  inviteRole TripRole  @default(EDITOR)
+  members   TripMember[]
   createdAt DateTime   @default(now())
 
   @@index([userId])
@@ -137,4 +146,16 @@ model Notification {
 
   @@unique([userId, dedupeKey])
   @@index([userId, readAt])
+}
+
+model TripMember {
+  tripId    String
+  userId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TripRole @default(EDITOR)
+  createdAt DateTime @default(now())
+
+  @@id([tripId, userId])
+  @@index([userId])
 }
