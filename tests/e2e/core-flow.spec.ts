@@ -50,6 +50,18 @@ test("plan a trip: add places, drag between days, track budget, share", async ({
   const day2 = page.locator("section", { has: page.getByRole("heading", { name: "Ngày 2" }) });
   await expect(day1.locator("li .font-medium")).toHaveText(["Phố cổ Hội An", "Biển Mỹ Khê"]);
 
+  // vote and discuss a place; both persist across reload
+  const firstRow = day1.locator("li").first();
+  await firstRow.getByRole("button", { name: "Muốn đi" }).click();
+  await expect(firstRow.getByRole("button", { name: "Muốn đi" })).toHaveText("👍 1");
+  await firstRow.getByRole("button", { name: "Bình luận" }).click();
+  await firstRow.getByPlaceholder("Viết bình luận…").fill("Nên đi buổi sáng");
+  await firstRow.getByRole("button", { name: "Gửi" }).click();
+  await expect(firstRow.getByText("Nên đi buổi sáng")).toBeVisible();
+  await page.reload();
+  await expect(day1.locator("li").first().getByRole("button", { name: "Muốn đi" })).toHaveText("👍 1");
+  await expect(day1.locator("li").first().getByRole("button", { name: "Bình luận" })).toHaveText("💬 1");
+
   // drag first item into day 2 and verify it persists across reload
   const handle = day1.getByRole("button", { name: "Kéo để sắp xếp" }).first();
   const from = (await handle.boundingBox())!;
