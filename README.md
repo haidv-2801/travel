@@ -7,7 +7,7 @@ Web lên kế hoạch du lịch (MVP): điểm đến, lịch trình theo ngày 
 ## Chạy local
 
 ```bash
-cp .env.example .env            # đặt JWT_SECRET (openssl rand -base64 32)
+cp .env.example .env            # đặt JWT_SECRET (openssl rand -base64 32); DATABASE_URL và DIRECT_URL đã trỏ vào docker compose
 docker compose up -d db         # PostgreSQL 16
 npm install
 npm run db:deploy               # áp dụng migration
@@ -16,6 +16,21 @@ npm run dev                     # http://localhost:3000
 ```
 
 > Đổi mật khẩu admin seed trước khi triển khai thật.
+
+## Dùng Supabase (Postgres trên cloud)
+
+App chỉ cần một Postgres; đăng nhập là JWT của app nên không dùng thư viện Supabase. Có hai biến:
+
+| Biến | Dùng cho | Giá trị |
+|---|---|---|
+| `DATABASE_URL` | Khi app chạy | Chuỗi kết nối trực tiếp (cổng 5432). Host serverless (Vercel...) dùng transaction pooler cổng 6543 kèm `?pgbouncer=true&connection_limit=1` |
+| `DIRECT_URL` | `prisma migrate` (`npm run db:deploy`) | Luôn là chuỗi trực tiếp (5432) hoặc session pooler; pooler 6543 không chạy migration được |
+
+1. Supabase Dashboard, nút **Connect**: copy chuỗi `db.<project>.supabase.co:5432`, thay `[YOUR-PASSWORD]` (ký tự đặc biệt phải mã hoá %, ví dụ `@` thành `%40`) và thêm `?sslmode=require`. Mẫu có sẵn, đang comment, trong `.env.example`.
+2. Đặt `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET` trong `.env` trên máy hoặc trong biến môi trường của nơi deploy. **Không commit mật khẩu thật.** Nếu mạng không có IPv6, dùng chuỗi session pooler (`aws-0-<region>.pooler.supabase.com:5432`, user `postgres.<project>`) cho `DIRECT_URL`.
+3. `npm run db:deploy` để tạo bảng. `npm run db:seed` chỉ để có dữ liệu mẫu và tài khoản admin mặc định: đổi mật khẩu admin ngay nếu seed lên DB thật.
+4. Migration `enable_rls` bật Row Level Security cho mọi bảng (không policy) để khoá `anon`/`authenticated` của Data API; app kết nối bằng quyền chủ bảng nên không bị ảnh hưởng. Bảng mới thêm sau này cần thêm dòng `ENABLE ROW LEVEL SECURITY` trong migration của nó. Có thể tắt luôn Data API ở Settings, API.
+5. `npm test` từ chối chạy khi `DATABASE_URL` không phải Postgres cục bộ, vì test xoá dữ liệu trong schema `test`.
 
 ## Tính năng MVP
 

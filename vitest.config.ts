@@ -6,7 +6,7 @@ export default defineConfig({
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
   test: {
     include: ["tests/unit/**/*.test.ts", "tests/api/**/*.test.ts"],
-    env: { DATABASE_URL: testDatabaseUrl(), JWT_SECRET: "test-secret-test-secret-123456" },
+    env: { DATABASE_URL: testDatabaseUrl(), DIRECT_URL: testDatabaseUrl(), JWT_SECRET: "test-secret-test-secret-123456" },
     setupFiles: ["tests/api/setup.ts"],
     globalSetup: ["tests/api/global-setup.ts"],
     fileParallelism: false, // API tests share one schema
