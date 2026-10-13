@@ -2,19 +2,19 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { vnd } from "@/lib/api";
-import { tripDays } from "@/lib/trips";
+import { accessibleTrips, tripDays } from "@/lib/trips";
 import { ItineraryView } from "@/components/itinerary-view";
 import { PrintButton } from "@/components/print-button";
 
 export const dynamic = "force-dynamic";
 
-/** Owner-only printable view: use the browser's "Save as PDF". */
+/** Printable view: use the browser's "Save as PDF". */
 export default async function PrintTrip({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const { id } = await params;
   const trip = await db.trip.findFirst({
-    where: { id, userId: user.id },
+    where: { id, ...accessibleTrips(user.id) },
     include: { items: { orderBy: [{ day: "asc" }, { position: "asc" }], include: { destination: true } }, expenses: true },
   });
   if (!trip) notFound();

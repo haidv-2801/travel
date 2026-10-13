@@ -15,7 +15,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   const d = await db.destination.findUnique({ where: { slug }, include: { category: true } });
   if (!d) notFound();
   const user = await getCurrentUser();
-  const trips = user ? await db.trip.findMany({ where: { userId: user.id }, orderBy: { startDate: "desc" }, select: { id: true, title: true, startDate: true, endDate: true } }) : [];
+  const trips = user ? await db.trip.findMany({ where: { OR: [{ userId: user.id }, { members: { some: { userId: user.id, role: "EDITOR" } } }] }, orderBy: { startDate: "desc" }, select: { id: true, title: true, startDate: true, endDate: true } }) : [];
   const isFav = user ? !!(await db.favorite.findUnique({ where: { userId_destinationId: { userId: user.id, destinationId: d.id } } })) : false;
   const nearby = await db.destination.findMany({ where: { city: { not: d.city }, region: d.region, id: { not: d.id } }, take: 3, orderBy: { rating: "desc" } });
 

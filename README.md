@@ -32,11 +32,12 @@ npm run dev                     # http://localhost:3000
 | Chia sẻ & PDF (P2) | Link công khai chỉ-đọc `/s/<token>` (bật/tắt được, không lộ chi phí), sao chép lịch trình về tài khoản, xuất PDF qua `/trips/:id/print` |
 | Thông báo (P2) | Chuông trong app, nhắc chuyến đi sắp khởi hành (≤3 ngày), chống trùng |
 | Routing (P2) | Tuyến đường lái xe thật + thời gian theo ngày qua OSRM; tự động fallback đường chim bay |
+| Cộng tác (P3) | Chủ chuyến đi mời bạn bè bằng link `/invite/<token>` với quyền Chỉnh sửa hoặc Chỉ xem; chủ đổi quyền/xoá thành viên, thành viên tự rời; kiểm tra quyền ở mọi API của chuyến đi |
 | Nền tảng | Zod validation, rate limit (in-memory), Dockerfile, CI (typecheck/lint/migrate/build) |
 
 ## API (rút gọn)
 
-`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
+`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `POST /api/trips/:id/invite` · `PATCH|DELETE /api/trips/:id/members/:userId` · `GET /api/invites/:token` · `POST /api/invites/:token/join` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
 
 ## Hạn chế đã biết / bước tiếp theo
 
@@ -46,4 +47,4 @@ npm run dev                     # http://localhost:3000
 - Điểm đánh giá seed ban đầu bị thay bằng trung bình thực khi có review đầu tiên.
 - Thông báo tạo lười khi người dùng mở app; Phase 4 chuyển sang background job.
 - Chưa có test tự động; nên thêm Vitest (validators/geo) + Playwright (luồng chính).
-- Tiếp theo: Collaborative trip (Owner/Editor/Viewer), Comments/Voting, Expense splitting, AI, Weather…
+- Tiếp theo: Comments/Voting, Expense splitting, AI, Weather…

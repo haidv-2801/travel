@@ -67,3 +67,6 @@ export const reviewSchema = z.object({
   imageUrl: z.string().url().max(500).refine((u) => u.startsWith("https://"), "Must be https").nullish(),
 });
 export const shareSchema = z.object({ enabled: z.boolean() });
+export const tripRoleSchema = z.enum(["EDITOR", "VIEWER"]);
+export const inviteSchema = z.object({ enabled: z.boolean(), role: tripRoleSchema.default("EDITOR") });
+export const memberUpdateSchema = z.object({ role: tripRoleSchema });
