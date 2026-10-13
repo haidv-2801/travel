@@ -1,15 +1,21 @@
-export type SplitExpense = { actual: number; paidById: string | null; splitAmong: string[] };
+export type SplitExpense = { actual: number; paidById: string | null; splitAmong: string[]; shareAmounts?: Record<string, number> | null };
 export type Transfer = { from: string; to: string; amount: number };
 
 /**
  * Net balance per participant in VND: positive = is owed money, negative = owes money.
  * Only expenses with an actual amount and a payer count. An empty `splitAmong` means everyone.
+ * When `shareAmounts` is set the split is exact: each person owes their own amount (the API guarantees they add up to `actual`).
  * Integer amounts: the remainder of an uneven split goes 1₫ each to the first sharers (sorted by id), so balances always sum to 0.
  */
 export function balances(expenses: SplitExpense[], participants: string[]): Record<string, number> {
   const net: Record<string, number> = Object.fromEntries(participants.map((id) => [id, 0]));
   for (const e of expenses) {
     if (!e.paidById || e.actual <= 0) continue;
+    if (e.shareAmounts && Object.keys(e.shareAmounts).length) {
+      for (const [id, amt] of Object.entries(e.shareAmounts)) net[id] = (net[id] ?? 0) - amt;
+      net[e.paidById] = (net[e.paidById] ?? 0) + e.actual;
+      continue;
+    }
     const sharers = [...new Set(e.splitAmong.length ? e.splitAmong : participants)].sort();
     if (!sharers.length) continue;
     const base = Math.floor(e.actual / sharers.length);

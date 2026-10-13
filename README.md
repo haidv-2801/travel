@@ -60,7 +60,7 @@ App chỉ cần một Postgres; đăng nhập là JWT của app nên không dùn
 | Thông báo (P2) | Chuông trong app, nhắc chuyến đi sắp khởi hành (≤3 ngày), chống trùng |
 | Routing (P2) | Tuyến đường lái xe thật + thời gian theo ngày qua OSRM; tự động fallback đường chim bay |
 | Cộng tác (P3) | Chủ chuyến đi mời bạn bè bằng link `/invite/<token>` với quyền Chỉnh sửa hoặc Chỉ xem; chủ đổi quyền/xoá thành viên, thành viên tự rời; kiểm tra quyền ở mọi API của chuyến đi |
-| Chia tiền nhóm (P3) | Mỗi khoản chi chọn người trả và chia đều cho ai (mặc định cả nhóm); tab Ngân sách hiện ai trả ai bao nhiêu để cân bằng (số tiền nguyên, tối thiểu số lần chuyển). Chỉ tính khoản có số tiền thực tế và đã chọn người trả; xoá thành viên thì họ bị gỡ khỏi người trả/chia cho của chuyến đó |
+| Chia tiền nhóm (P3) | Mỗi khoản chi chọn người trả và chia đều cho ai (mặc định cả nhóm) hoặc chia không đều theo số tiền từng người (phải cộng đúng bằng số tiền thực tế); tab Ngân sách hiện ai trả ai bao nhiêu để cân bằng (số tiền nguyên, tối thiểu số lần chuyển). Chỉ tính khoản có số tiền thực tế và đã chọn người trả; xoá thành viên thì họ bị gỡ khỏi người trả/chia cho của chuyến đó |
 | Bình chọn & bình luận (P3) | Trên từng địa điểm trong lịch trình: 👍 muốn đi / 👎 nên bỏ (mỗi người một phiếu, bấm lại để bỏ phiếu) và thảo luận; thành viên Chỉnh sửa được bình chọn và bình luận, Chỉ xem chỉ đọc; tác giả hoặc chủ xoá được bình luận |
 | Ảnh & nhắc nền (P4) | Tải ảnh đánh giá lên Supabase Storage; cron nhắc chuyến đi cho cả thành viên (xem mục Phase 4) |
 | Nền tảng | Zod validation, rate limit (in-memory), Dockerfile, CI (typecheck/lint/migrate/build) |
