@@ -91,7 +91,7 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {tab === "budget" ? (
-        <fieldset disabled={!canEdit} className={lock}><BudgetPanel budget={trip.budget} expenses={trip.expenses} onAdd={(e) => addExpense.mutateAsync(e)} onUpdate={(eid, patch) => updExpense.mutate({ eid, patch })} onDelete={(eid) => delExpense.mutate(eid)} onBudget={(b) => setBudget.mutate(b)} /></fieldset>
+        <fieldset disabled={!canEdit} className={lock}><BudgetPanel budget={trip.budget} expenses={trip.expenses} people={[{ id: trip.user.id, name: trip.user.name }, ...trip.members.map((m) => ({ id: m.userId, name: m.user.name }))]} onAdd={(e) => addExpense.mutateAsync(e)} onUpdate={(eid, patch) => updExpense.mutate({ eid, patch })} onDelete={(eid) => delExpense.mutate(eid)} onBudget={(b) => setBudget.mutate(b)} /></fieldset>
       ) : (
         <div className="grid gap-5 lg:grid-cols-5">
           <div className="space-y-4 lg:col-span-3">

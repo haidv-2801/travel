@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { handler, parse, requireUser } from "@/lib/http";
 import { tripUpdateSchema } from "@/lib/validators";
 import { tripAccess, tripDays } from "@/lib/trips";
+import { expenseInclude, expenseOut } from "@/lib/expenses";
 
 type P = { id: string };
 
@@ -14,7 +15,7 @@ export const GET = handler<P>(async (_req, { params }) => {
     where: { id },
     include: {
       items: { include: { destination: { include: { category: true } } }, orderBy: [{ day: "asc" }, { position: "asc" }] },
-      expenses: { orderBy: { createdAt: "asc" } },
+      expenses: { orderBy: { createdAt: "asc" }, include: expenseInclude },
       user: { select: { id: true, name: true } },
       members: { orderBy: { createdAt: "asc" }, select: { userId: true, role: true, user: { select: { name: true, email: true } } } },
     },
@@ -23,6 +24,7 @@ export const GET = handler<P>(async (_req, { params }) => {
   const { inviteToken, inviteRole, ...rest } = trip;
   return NextResponse.json({
     ...rest,
+    expenses: rest.expenses.map(expenseOut),
     myRole: role,
     ...(role === "OWNER" ? { inviteToken, inviteRole } : {}),
     days: tripDays(trip.startDate, trip.endDate),

@@ -33,3 +33,14 @@ export async function ownedTrip(tripId: string, userId: string) {
 export function tripDays(start: Date, end: Date) {
   return Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
 }
+
+/** Everyone who can take part in splitting costs: the owner plus all members. */
+export async function tripParticipantIds(tripId: string, ownerId: string) {
+  const members = await db.tripMember.findMany({ where: { tripId }, select: { userId: true } });
+  return [ownerId, ...members.map((m) => m.userId)];
+}
+
+/** Throws 400 unless the payer and every sharer take part in the trip. */
+export function assertParticipants(participants: string[], ids: (string | null | undefined)[]) {
+  if (ids.some((id) => id && !participants.includes(id))) throw new HttpError(400, "Payer and sharers must be trip members");
+}
