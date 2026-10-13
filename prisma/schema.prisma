@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  trips        Trip[]
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  slug         String        @unique
+  destinations Destination[]
+}
+
+model Destination {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String
+  city        String
+  region      String
+  lat         Float
+  lng         Float
+  imageUrl    String?
+  searchText  String    @default("") // normalized name + city for accent-insensitive search
+  avgCost     Int       @default(0) // VND per person
+  rating      Float     @default(0)
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
+  items       TripItem[]
+
+  @@index([city])
+  @@index([categoryId])
+}
+
+model Trip {
+  id        String     @id @default(cuid())
+  title     String
+  startDate DateTime
+  endDate   DateTime
+  budget    Int        @default(0) // VND
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     TripItem[]
+  expenses  Expense[]
+  createdAt DateTime   @default(now())
+
+  @@index([userId])
+}
+
+model TripItem {
+  id            String       @id @default(cuid())
+  tripId        String
+  trip          Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  destinationId String
+  destination   Destination  @relation(fields: [destinationId], references: [id])
+  day           Int // 1-based day index
+  position      Int // order within the day
+  note          String?
+
+  @@index([tripId, day, position])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title     String
+  category  String // transport | food | lodging | tickets | other
+  planned   Int      @default(0)
+  actual    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([tripId])
+}

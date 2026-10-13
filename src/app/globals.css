@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50; }
+  .btn-ghost { @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50; }
+  .btn-danger { @apply inline-flex items-center justify-center rounded-lg px-2 py-1 text-xs text-red-600 hover:bg-red-50; }
+  .input { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500; }
+  .card { @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm; }
+  .label { @apply mb-1 block text-xs font-medium text-slate-600; }
+}
+.leaflet-container { z-index: 0; }
