@@ -34,6 +34,7 @@ npm run dev                     # http://localhost:3000
 | Routing (P2) | Tuyến đường lái xe thật + thời gian theo ngày qua OSRM; tự động fallback đường chim bay |
 | Cộng tác (P3) | Chủ chuyến đi mời bạn bè bằng link `/invite/<token>` với quyền Chỉnh sửa hoặc Chỉ xem; chủ đổi quyền/xoá thành viên, thành viên tự rời; kiểm tra quyền ở mọi API của chuyến đi |
 | Chia tiền nhóm (P3) | Mỗi khoản chi chọn người trả và chia đều cho ai (mặc định cả nhóm); tab Ngân sách hiện ai trả ai bao nhiêu để cân bằng (số tiền nguyên, tối thiểu số lần chuyển). Chỉ tính khoản có số tiền thực tế và đã chọn người trả; xoá thành viên thì họ bị gỡ khỏi người trả/chia cho của chuyến đó |
+| Bình chọn & bình luận (P3) | Trên từng địa điểm trong lịch trình: 👍 muốn đi / 👎 nên bỏ (mỗi người một phiếu, bấm lại để bỏ phiếu) và thảo luận; thành viên Chỉnh sửa được bình chọn và bình luận, Chỉ xem chỉ đọc; tác giả hoặc chủ xoá được bình luận |
 | Nền tảng | Zod validation, rate limit (in-memory), Dockerfile, CI (typecheck/lint/migrate/build) |
 
 ## Test
@@ -47,7 +48,7 @@ Test API tập trung vào phân quyền: truy cập chéo user (IDOR), admin-onl
 
 ## API (rút gọn)
 
-`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `POST /api/trips/:id/invite` · `PATCH|DELETE /api/trips/:id/members/:userId` · `GET /api/invites/:token` · `POST /api/invites/:token/join` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
+`POST /api/auth/{register,login,logout}` · `GET /api/auth/me` · `GET|POST /api/destinations` · `GET|PATCH|DELETE /api/destinations/:id` · `GET|POST /api/categories` · `GET|POST /api/trips` · `GET|PATCH|DELETE /api/trips/:id` · `POST|PATCH /api/trips/:id/items` · `DELETE /api/trips/:id/items/:itemId` · `POST /api/trips/:id/expenses` · `PATCH|DELETE /api/trips/:id/expenses/:expenseId` · `GET /api/admin/users` · `PATCH /api/admin/users/:id` · `GET|POST /api/favorites` · `DELETE /api/favorites/:destinationId` · `GET|POST /api/destinations/:id/reviews` · `DELETE /api/reviews/:id` · `PUT /api/trips/:id/items/:itemId/vote` · `GET|POST /api/trips/:id/items/:itemId/comments` · `DELETE /api/trips/:id/comments/:commentId` · `POST /api/trips/:id/invite` · `PATCH|DELETE /api/trips/:id/members/:userId` · `GET /api/invites/:token` · `POST /api/invites/:token/join` · `POST /api/trips/:id/share` · `GET /api/shared/:token` · `POST /api/shared/:token/clone` · `GET /api/notifications` · `POST /api/notifications/read` · `GET /api/route?points=lat,lng;lat,lng`
 
 ## Hạn chế đã biết / bước tiếp theo
 
@@ -56,4 +57,4 @@ Test API tập trung vào phân quyền: truy cập chéo user (IDOR), admin-onl
 - Ảnh review mới nhận link https; upload file cần object storage (Phase 4).
 - Điểm đánh giá seed ban đầu bị thay bằng trung bình thực khi có review đầu tiên.
 - Thông báo tạo lười khi người dùng mở app; Phase 4 chuyển sang background job.
-- Tiếp theo: Comments/Voting, AI, Weather…
+- Tiếp theo: AI, Weather…

@@ -22,12 +22,13 @@ export const DELETE = handler<P>(async (_req, { params }) => {
   const u = await requireUser();
   const { id, userId } = await params;
   await tripAccess(id, u.id, userId === u.id ? "view" : "owner");
-  // Removing a member also drops them from this trip's cost splitting so no debt is left against someone who is gone.
+  // Removing a member also drops them from this trip's cost splitting and votes so nothing is left counted for someone who is gone.
   const r = await db.$transaction(async (tx) => {
     const del = await tx.tripMember.deleteMany({ where: { tripId: id, userId } });
     if (del.count) {
       await tx.expense.updateMany({ where: { tripId: id, paidById: userId }, data: { paidById: null } });
       await tx.expenseShare.deleteMany({ where: { userId, expense: { tripId: id } } });
+      await tx.tripItemVote.deleteMany({ where: { userId, item: { tripId: id } } });
     }
     return del;
   });

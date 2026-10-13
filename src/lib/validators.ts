@@ -72,3 +72,5 @@ export const shareSchema = z.object({ enabled: z.boolean() });
 export const tripRoleSchema = z.enum(["EDITOR", "VIEWER"]);
 export const inviteSchema = z.object({ enabled: z.boolean(), role: tripRoleSchema.default("EDITOR") });
 export const memberUpdateSchema = z.object({ role: tripRoleSchema });
+export const voteSchema = z.object({ value: z.union([z.literal(1), z.literal(-1), z.literal(0)]) }); // 0 removes my vote
+export const commentSchema = z.object({ body: z.string().trim().min(1).max(500) });

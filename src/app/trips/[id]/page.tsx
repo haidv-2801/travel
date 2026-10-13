@@ -8,6 +8,7 @@ import { DayBoard, type Item } from "@/components/day-board";
 import { BudgetPanel, type Expense } from "@/components/budget-panel";
 import { TripMap } from "@/components/map-dynamic";
 import { SharePanel } from "@/components/share-panel";
+import { ItemDiscussion } from "@/components/item-discussion";
 import { MembersPanel, type Member } from "@/components/members-panel";
 
 type Trip = { id: string; title: string; startDate: string; endDate: string; budget: number; shareToken: string | null; days: number; myRole: "OWNER" | "EDITOR" | "VIEWER"; user: { id: string; name: string }; members: Member[]; inviteToken?: string | null; inviteRole?: "EDITOR" | "VIEWER"; items: Item[]; expenses: Expense[] };
@@ -38,6 +39,7 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
     mutationFn: (items: { id: string; day: number; position: number }[]) => api(`/api/trips/${id}/items`, { method: "PATCH", body: { items } }),
     onSuccess: refresh,
   });
+  const vote = useMutation({ mutationFn: ({ itemId, value }: { itemId: string; value: 1 | -1 | 0 }) => api(`/api/trips/${id}/items/${itemId}/vote`, { method: "PUT", body: { value } }), onSuccess: refresh });
   const addExpense = useMutation({ mutationFn: (e: Omit<Expense, "id">) => api(`/api/trips/${id}/expenses`, { method: "POST", body: e }), onSuccess: refresh });
   const updExpense = useMutation({ mutationFn: ({ eid, patch }: { eid: string; patch: Partial<Expense> }) => api(`/api/trips/${id}/expenses/${eid}`, { method: "PATCH", body: patch }), onSuccess: refresh });
   const delExpense = useMutation({ mutationFn: (eid: string) => api(`/api/trips/${id}/expenses/${eid}`, { method: "DELETE" }), onSuccess: refresh });
@@ -110,7 +112,7 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
               ))}
               {addItem.error && <p className="text-sm text-red-600">{(addItem.error as Error).message}</p>}
             </div>}
-            <div className={lock}><DayBoard items={trip.items} days={trip.days} onChange={(l) => reorder.mutate(l)} onRemove={(iid) => removeItem.mutate(iid)} /></div>
+            <DayBoard items={trip.items} days={trip.days} onChange={(l) => reorder.mutate(l)} onRemove={(iid) => removeItem.mutate(iid)} me={me?.user?.id} readOnly={!canEdit} onVote={(itemId, value) => vote.mutate({ itemId, value })} renderDiscussion={(it) => <ItemDiscussion tripId={trip.id} itemId={it.id} me={me?.user?.id} isOwner={trip.myRole === "OWNER"} canWrite={canEdit} />} />
           </div>
           <div className="space-y-3 lg:col-span-2">
             <div className="flex items-center gap-2">

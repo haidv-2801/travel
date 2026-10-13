@@ -14,7 +14,7 @@ export const GET = handler<P>(async (_req, { params }) => {
   const trip = await db.trip.findUniqueOrThrow({
     where: { id },
     include: {
-      items: { include: { destination: { include: { category: true } } }, orderBy: [{ day: "asc" }, { position: "asc" }] },
+      items: { include: { destination: { include: { category: true } }, votes: { select: { userId: true, value: true } }, _count: { select: { comments: true } } }, orderBy: [{ day: "asc" }, { position: "asc" }] },
       expenses: { orderBy: { createdAt: "asc" }, include: expenseInclude },
       user: { select: { id: true, name: true } },
       members: { orderBy: { createdAt: "asc" }, select: { userId: true, role: true, user: { select: { name: true, email: true } } } },

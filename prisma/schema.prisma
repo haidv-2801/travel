@@ -31,6 +31,8 @@ model User {
   memberships  TripMember[]
   paidExpenses Expense[]      @relation("ExpensePayer")
   expenseShares ExpenseShare[]
+  itemVotes    TripItemVote[]
+  itemComments TripItemComment[]
 }
 
 model Category {
@@ -93,8 +95,34 @@ model TripItem {
   day           Int // 1-based day index
   position      Int // order within the day
   note          String?
+  votes         TripItemVote[]
+  comments      TripItemComment[]
 
   @@index([tripId, day, position])
+}
+
+model TripItemVote {
+  itemId String
+  userId String
+  item   TripItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  value  Int // +1 = want to go, -1 = would skip
+
+  @@id([itemId, userId])
+  @@index([userId])
+}
+
+model TripItemComment {
+  id        String   @id @default(cuid())
+  itemId    String
+  userId    String
+  item      TripItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([itemId, createdAt])
+  @@index([userId])
 }
 
 model Expense {
