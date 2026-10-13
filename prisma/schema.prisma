@@ -4,7 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL") // runtime connection (may be a pooler)
+  directUrl = env("DIRECT_URL") // used by prisma migrate; a direct/session connection (same as DATABASE_URL when there is no pooler)
 }
 
 enum TripRole {

@@ -5,6 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://tripmate:tripmate@localhost:5432/tripmate
+      DIRECT_URL: postgresql://tripmate:tripmate@localhost:5432/tripmate
       JWT_SECRET: ci-secret-ci-secret-ci-secret
     services:
       db:
