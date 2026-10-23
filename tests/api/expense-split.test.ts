@@ -71,4 +71,46 @@ describe("expense payer and split", () => {
     expect(untouched.paidById).toBe(friend.id);
     expect(untouched.shares).toHaveLength(1);
   });
+
+  describe("exact (uneven) shares", () => {
+    const exact = (over: object = {}) => body({ paidById: owner.id, shareAmounts: { [owner.id]: 500_000, [friend.id]: 400_000 }, ...over });
+
+    it("stores exact amounts and returns them", async () => {
+      const r = await call(addExpense, "POST", "/x", { params: p(), body: exact() });
+      expect(r.status).toBe(201);
+      expect(r.json.shareAmounts).toEqual({ [owner.id]: 500_000, [friend.id]: 400_000 });
+      expect(r.json.splitAmong.sort()).toEqual([owner.id, friend.id].sort());
+      const t = (await call(getTrip, "GET", "/x", { params: p() })).json;
+      expect(t.expenses[0].shareAmounts).toEqual(r.json.shareAmounts);
+    });
+
+    it("equal splits report shareAmounts as null", async () => {
+      const r = await call(addExpense, "POST", "/x", { params: p(), body: body({ paidById: owner.id, splitAmong: [owner.id, friend.id] }) });
+      expect(r.json.shareAmounts).toBeNull();
+    });
+
+    it("rejects amounts that do not add up to the cost, and people outside the trip", async () => {
+      expect((await call(addExpense, "POST", "/x", { params: p(), body: exact({ actual: 1_000_000 }) })).status).toBe(400);
+      expect((await call(addExpense, "POST", "/x", { params: p(), body: exact({ shareAmounts: { [stranger.id]: 900_000 } }) })).status).toBe(400);
+    });
+
+    it("can switch an expense between exact and equal, and guards the cost while exact", async () => {
+      const id = (await call(addExpense, "POST", "/x", { params: p(), body: exact() })).json.id;
+      const pp = { id: tripId, expenseId: id };
+      expect((await call(patchExpense, "PATCH", "/x", { params: pp, body: { actual: 1_000_000 } })).status).toBe(400);
+      const ok = await call(patchExpense, "PATCH", "/x", { params: pp, body: { actual: 1_000_000, shareAmounts: { [owner.id]: 600_000, [friend.id]: 400_000 } } });
+      expect(ok.status).toBe(200);
+      expect(ok.json.shareAmounts[owner.id]).toBe(600_000);
+      const back = await call(patchExpense, "PATCH", "/x", { params: pp, body: { splitAmong: [] } });
+      expect(back.status).toBe(200);
+      expect(back.json.shareAmounts).toBeNull();
+      expect(back.json.splitAmong).toEqual([]);
+    });
+
+    it("viewers cannot change shares", async () => {
+      const id = (await call(addExpense, "POST", "/x", { params: p(), body: exact() })).json.id;
+      await actAs(viewer);
+      expect((await call(patchExpense, "PATCH", "/x", { params: { id: tripId, expenseId: id }, body: { splitAmong: [] } })).status).toBe(403);
+    });
+  });
 });
