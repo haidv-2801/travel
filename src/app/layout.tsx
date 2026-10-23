@@ -5,9 +5,8 @@ import "./globals.css";
 import { getCurrentUser } from "@/lib/auth";
 import { Providers } from "@/components/providers";
 import { LogoutButton } from "@/components/logout-button";
-import { NotificationBell } from "@/components/notification-bell";
 
-export const metadata: Metadata = { title: "TripMate – Lên kế hoạch du lịch", description: "Lập lịch trình, quản lý ngân sách và khám phá điểm đến Việt Nam." };
+export const metadata: Metadata = { title: "TripMate – Lên kế hoạch du lịch", description: "Lập lịch trình, chia chi phí nhóm và khám phá điểm đến Việt Nam." };
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,12 +19,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Link href="/" className="text-lg font-bold text-brand-600">TripMate</Link>
             <Link href="/destinations" className="hover:text-brand-600">Điểm đến</Link>
             {user && <Link href="/trips" className="hover:text-brand-600">Chuyến đi</Link>}
-            {user && <Link href="/favorites" className="hover:text-brand-600">Yêu thích</Link>}
-            {user?.role === "ADMIN" && <Link href="/admin" className="hover:text-brand-600">Quản trị</Link>}
             <span className="ml-auto flex items-center gap-3">
               {user ? (
                 <>
-                  <Providers><NotificationBell /></Providers>
                   <span className="text-slate-500">{user.name}</span>
                   <LogoutButton />
                 </>

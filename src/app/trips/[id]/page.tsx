@@ -1,17 +1,15 @@
 "use client";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
-import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, vnd } from "@/lib/api";
-import { distanceKm } from "@/lib/geo";
 import { DayBoard, type Item } from "@/components/day-board";
 import { BudgetPanel, type Expense } from "@/components/budget-panel";
 import { TripMap } from "@/components/map-dynamic";
-import { SharePanel } from "@/components/share-panel";
 import { ItemDiscussion } from "@/components/item-discussion";
 import { MembersPanel, type Member } from "@/components/members-panel";
 
-type Trip = { id: string; title: string; startDate: string; endDate: string; budget: number; shareToken: string | null; days: number; myRole: "OWNER" | "EDITOR" | "VIEWER"; user: { id: string; name: string }; members: Member[]; inviteToken?: string | null; inviteRole?: "EDITOR" | "VIEWER"; items: Item[]; expenses: Expense[] };
+type Trip = { id: string; title: string; startDate: string; endDate: string; budget: number; days: number; myRole: "OWNER" | "EDITOR" | "VIEWER"; user: { id: string; name: string }; members: Member[]; inviteToken?: string | null; inviteRole?: "EDITOR" | "VIEWER"; items: Item[]; expenses: Expense[] };
 type Me = { id: string };
 type Dest = { id: string; name: string; city: string };
 
@@ -53,23 +51,6 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
     sorted.forEach((i) => m.set(i.day, [...(m.get(i.day) ?? []), i]));
     return [...m.entries()].filter(([d]) => mapDay === 0 || d === mapDay).sort((x, y) => x[0] - y[0]);
   }, [sorted, mapDay]);
-  // Real driving routes per day (OSRM via /api/route); falls back to straight dashed lines if unavailable.
-  const routable = byDay.filter(([, l]) => l.length > 1);
-  const routeQueries = useQueries({
-    queries: routable.map(([, l]) => {
-      const pts = l.map((i) => `${i.destination.lat},${i.destination.lng}`).join(";");
-      return { queryKey: ["route", pts], queryFn: () => api<{ distanceKm: number; durationMin: number; geometry: [number, number][] }>(`/api/route?points=${pts}`), retry: false, staleTime: 3_600_000 };
-    }),
-  });
-  const legs = byDay.map(([day, list]) => {
-    const idx = routable.findIndex(([d]) => d === day);
-    const r = idx >= 0 ? routeQueries[idx]?.data : undefined;
-    let km = 0;
-    for (let n = 1; n < list.length; n++) km += distanceKm([list[n - 1].destination.lat, list[n - 1].destination.lng], [list[n].destination.lat, list[n].destination.lng]);
-    return { day, km: r?.distanceKm ?? km, minutes: r?.durationMin ?? null, real: !!r, geometry: r?.geometry, straight: list.map((i) => [i.destination.lat, i.destination.lng] as [number, number]) };
-  });
-  const lines = legs.filter((l) => l.straight.length > 1).map((l) => (l.geometry ? { positions: l.geometry } : { positions: l.straight, dashed: true }));
-
   if (error) return <p className="text-red-600">{(error as Error).message}. <Link className="underline" href="/trips">Quay lại</Link></p>;
   if (!trip) return <p className="text-slate-500">Đang tải…</p>;
 
@@ -83,7 +64,6 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
         <h1 className="text-2xl font-bold">{trip.title}</h1>
         <p className="text-sm text-slate-500">{new Date(trip.startDate).toLocaleDateString("vi-VN")} – {new Date(trip.endDate).toLocaleDateString("vi-VN")} · {trip.days} ngày · Ngân sách {vnd(trip.budget)}</p>
       </div>
-      {trip.myRole === "OWNER" && <SharePanel tripId={trip.id} initialToken={trip.shareToken} />}
       {me?.user && <MembersPanel tripId={trip.id} myId={me.user.id} myRole={trip.myRole} owner={trip.user} members={trip.members} inviteToken={trip.inviteToken} inviteRole={trip.inviteRole} />}
       {!canEdit && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">Bạn chỉ có quyền xem chuyến đi này.</p>}
       <div className="flex gap-2">
@@ -122,13 +102,7 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
                 {Array.from({ length: trip.days }, (_, i) => <option key={i} value={i + 1}>Ngày {i + 1}</option>)}
               </select>
             </div>
-            <TripMap points={points} lines={lines} height={380} />
-            <div className="card text-sm">
-              <h3 className="mb-1 font-semibold">Quãng đường</h3>
-              {legs.length === 0 ? <p className="text-slate-400">Chưa có địa điểm.</p> : legs.map((l) => (
-                <div key={l.day} className="flex justify-between"><span>Ngày {l.day}</span><span>{l.km.toFixed(1)} km{l.minutes != null && ` · ${Math.floor(l.minutes / 60)}h${String(l.minutes % 60).padStart(2, "0")}`}{!l.real && l.straight.length > 1 && <span className="text-slate-400"> (chim bay)</span>}</span></div>
-              ))}
-            </div>
+            <TripMap points={points} height={380} />
           </div>
         </div>
       )}

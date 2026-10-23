@@ -10,8 +10,7 @@ export async function middleware(req: NextRequest) {
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
-  if (pathname.startsWith("/admin") && session.role !== "ADMIN") return NextResponse.redirect(new URL("/", req.url));
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/trips/:path*", "/admin/:path*", "/favorites/:path*", "/invite/:path*"] };
+export const config = { matcher: ["/trips/:path*", "/invite/:path*"] };

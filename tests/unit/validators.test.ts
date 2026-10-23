@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expenseSchema, itemSchema, registerSchema, reviewSchema, tripSchema } from "@/lib/validators";
+import { expenseSchema, itemSchema, registerSchema, tripSchema } from "@/lib/validators";
 
 describe("validators", () => {
   it("register lowercases/trims email and enforces password length", () => {
@@ -23,12 +23,5 @@ describe("validators", () => {
     expect(expenseSchema.safeParse({ title: "a", category: "food", planned: 1, actual: 0 }).success).toBe(true);
     expect(expenseSchema.safeParse({ title: "a", category: "weapons" }).success).toBe(false);
     expect(expenseSchema.safeParse({ title: "a", category: "food", actual: -5 }).success).toBe(false);
-  });
-  it("review rating 1..5 and https-only image", () => {
-    expect(reviewSchema.safeParse({ rating: 5, comment: "ok" }).success).toBe(true);
-    expect(reviewSchema.safeParse({ rating: 0, comment: "ok" }).success).toBe(false);
-    expect(reviewSchema.safeParse({ rating: 3, comment: "ok", imageUrl: "http://a.com/x.png" }).success).toBe(false);
-    expect(reviewSchema.safeParse({ rating: 3, comment: "ok", imageUrl: "javascript:alert(1)" }).success).toBe(false);
-    expect(reviewSchema.safeParse({ rating: 3, comment: "ok", imageUrl: "https://a.com/x.png" }).success).toBe(true);
   });
 });

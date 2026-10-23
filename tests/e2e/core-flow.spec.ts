@@ -14,14 +14,6 @@ async function register(page: Page) {
 test("anonymous users are redirected from protected pages", async ({ page }) => {
   await page.goto("/trips");
   await expect(page).toHaveURL(/\/login\?next=%2Ftrips/);
-  await page.goto("/admin");
-  await expect(page).toHaveURL(/\/login/);
-});
-
-test("regular users cannot open /admin", async ({ page }) => {
-  await register(page);
-  await page.goto("/admin");
-  await expect(page).not.toHaveURL(/\/admin/);
 });
 
 test("destinations: accent-insensitive search", async ({ page }) => {
@@ -30,7 +22,7 @@ test("destinations: accent-insensitive search", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Vịnh Hạ Long" })).toHaveCount(0);
 });
 
-test("plan a trip: add places, drag between days, track budget, share", async ({ page, browser }) => {
+test("plan a trip: add places, drag between days, track budget", async ({ page }) => {
   await register(page);
 
   // create trip
@@ -87,15 +79,4 @@ test("plan a trip: add places, drag between days, track budget, share", async ({
   await expect(page.getByRole("cell", { name: "Vé máy bay" })).toBeVisible();
   await expect(page.getByText("2.800.000₫")).toBeVisible(); // 5,000,000 - max(planned, actual)
 
-  // share link is readable by an anonymous visitor
-  await page.getByRole("button", { name: "Lịch trình" }).click();
-  await page.getByRole("button", { name: "Tạo link chia sẻ" }).click();
-  const url = await page.locator("input[readonly]").inputValue();
-  const anon = await browser.newContext();
-  const pub = await anon.newPage();
-  await pub.goto(url);
-  await expect(pub.getByRole("heading", { name: "E2E trip" })).toBeVisible();
-  await expect(pub.getByText("Phố cổ Hội An")).toBeVisible();
-  await expect(pub.getByText("Vé máy bay")).toHaveCount(0); // expenses never shared
-  await anon.close();
 });

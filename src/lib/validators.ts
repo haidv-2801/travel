@@ -62,14 +62,6 @@ export const expenseSchema = z.object({
 });
 export const expenseUpdateSchema = expenseSchema.partial();
 
-export const favoriteSchema = z.object({ destinationId: z.string().min(1) });
-export const reviewSchema = z.object({
-  rating: z.number().int().min(1).max(5),
-  comment: z.string().trim().min(1).max(1000),
-  // Photos: https URL only for now (file upload comes with object storage).
-  imageUrl: z.string().url().max(500).refine((u) => u.startsWith("https://"), "Must be https").nullish(),
-});
-export const shareSchema = z.object({ enabled: z.boolean() });
 export const tripRoleSchema = z.enum(["EDITOR", "VIEWER"]);
 export const inviteSchema = z.object({ enabled: z.boolean(), role: tripRoleSchema.default("EDITOR") });
 export const memberUpdateSchema = z.object({ role: tripRoleSchema });
