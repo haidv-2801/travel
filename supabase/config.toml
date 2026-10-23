@@ -1,0 +1,9 @@
+# Local Supabase (`npx supabase start`). Migrations in ./migrations are applied automatically.
+project_id = "tripmate"
+
+[auth]
+site_url = "http://localhost:3000"
+
+[auth.email]
+# Sign-up logs the user in right away (matches how the app behaved before). Turn on for production if you want verified emails.
+enable_confirmations = false

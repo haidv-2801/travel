@@ -4,36 +4,27 @@ jobs:
   check:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql://tripmate:tripmate@localhost:5432/tripmate
-      DIRECT_URL: postgresql://tripmate:tripmate@localhost:5432/tripmate
-      JWT_SECRET: ci-secret-ci-secret-ci-secret
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key
     services:
       db:
         image: postgres:16-alpine
-        env: { POSTGRES_USER: tripmate, POSTGRES_PASSWORD: tripmate, POSTGRES_DB: tripmate }
+        env: { POSTGRES_PASSWORD: postgres }
         ports: ["5432:5432"]
-        options: --health-cmd "pg_isready -U tripmate" --health-interval 5s --health-retries 10
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npx prisma generate
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm run db:deploy
-      - run: npm run db:seed
-      - name: Unit + API tests (isolated "test" schema)
-        run: npm test
+      - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - name: E2E tests
-        run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: |
-            playwright-report
-            test-results
-          retention-days: 7
+      - name: RLS tests (migrations + permission matrix on plain Postgres with a stubbed auth schema)
+        env:
+          PGPASSWORD: postgres
+        run: |
+          for f in supabase/tests/stub-auth.sql supabase/migrations/*.sql supabase/tests/rls.sql; do
+            psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q -f "$f"
+          done

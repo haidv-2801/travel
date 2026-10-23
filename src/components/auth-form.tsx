@@ -13,6 +13,7 @@ const registerForm = z.object({ ...base, name: z.string().min(1, "Nhập tên") 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ name?: string; email: string; password: string }>({
     resolver: zodResolver(mode === "login" ? loginForm : registerForm),
   });
@@ -23,7 +24,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       onSubmit={handleSubmit(async (v) => {
         setError("");
         try {
-          await api(`/api/auth/${mode}`, { method: "POST", body: v });
+          const r = await api<{ needsConfirmation?: boolean }>(`/api/auth/${mode}`, { method: "POST", body: v });
+          if (r.needsConfirmation) return setNotice("Đã gửi email xác nhận. Hãy mở email rồi đăng nhập.");
           const next = new URLSearchParams(location.search).get("next");
           router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/trips");
           router.refresh();
@@ -51,6 +53,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {notice && <p className="text-sm text-green-700">{notice}</p>}
       <button className="btn w-full" disabled={isSubmitting}>{mode === "login" ? "Đăng nhập" : "Đăng ký"}</button>
     </form>
   );

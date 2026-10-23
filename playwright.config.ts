@@ -14,6 +14,6 @@ export default defineConfig({
     // In sandboxes without `playwright install`, point at an existing Chromium.
     launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
   },
-  // Expects `npm run build` (and a migrated + seeded DB) first.
+  // Expects `npm run build`, a running Supabase stack (`npx supabase start`), seeded data and .env.
   webServer: { command: `npx next start -p ${port}`, url: `http://localhost:${port}`, reuseExistingServer: !process.env.CI, timeout: 60_000 },
 });

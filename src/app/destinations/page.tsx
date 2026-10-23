@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
-import { db } from "@/lib/db";
+import { createClient } from "@/lib/supabase/server";
+import { searchDestinations } from "@/lib/destinations";
+import { destinationOut } from "@/lib/mappers";
 import { vnd } from "@/lib/api";
 import { normalize } from "@/lib/text";
 
@@ -10,17 +11,15 @@ const PAGE_SIZE = 9;
 export default async function Destinations({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
-  const where: Prisma.DestinationWhereInput = {
-    ...(sp.q && { searchText: { contains: normalize(sp.q) } }),
-    ...(sp.region && { region: sp.region }),
-    ...(sp.category && { category: { slug: sp.category } }),
-  };
-  const [items, total, categories, regions] = await Promise.all([
-    db.destination.findMany({ where, include: { category: true }, orderBy: [{ rating: "desc" }, { name: "asc" }], skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
-    db.destination.count({ where }),
-    db.category.findMany({ orderBy: { name: "asc" } }),
-    db.destination.findMany({ distinct: ["region"], select: { region: true } }),
+  const sb = await createClient();
+  const [{ items: rows, total }, cats, regionRows] = await Promise.all([
+    searchDestinations(sb, { q: sp.q ? normalize(sp.q) : undefined, region: sp.region, category: sp.category, page, pageSize: PAGE_SIZE }),
+    sb.from("categories").select("id, name, slug").order("name"),
+    sb.from("destinations").select("region"),
   ]);
+  const items = rows.map(destinationOut);
+  const categories = cats.data ?? [];
+  const regions = [...new Set((regionRows.data ?? []).map((r) => r.region as string))].sort().map((region) => ({ region }));
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const qs = (p: number) => {
     const u = new URLSearchParams();
@@ -55,7 +54,7 @@ export default async function Destinations({ searchParams }: { searchParams: Pro
             <p className="text-xs text-slate-500">{d.city} · {d.region}</p>
             <p className="mt-2 line-clamp-2 text-sm text-slate-600">{d.description}</p>
             <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">{d.category.name}</span>
+              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">{d.category?.name}</span>
               <span className="text-slate-500">~{vnd(d.avgCost)}/người</span>
             </div>
           </Link>
