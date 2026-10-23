@@ -1,7 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { handler, parse, requireUser } from "@/lib/http";
+import { handler, must, parse, requireUser } from "@/lib/http";
 import { inviteSchema } from "@/lib/validators";
 import { tripAccess } from "@/lib/trips";
 
@@ -9,9 +8,9 @@ import { tripAccess } from "@/lib/trips";
 export const POST = handler<{ id: string }>(async (req, { params }) => {
   const u = await requireUser();
   const { id } = await params;
-  const { trip } = await tripAccess(id, u.id, "owner");
+  const { trip } = await tripAccess(u.sb, id, u.id, "owner");
   const { enabled, role } = await parse(req, inviteSchema);
   const inviteToken = enabled ? trip.inviteToken ?? randomBytes(18).toString("base64url") : null;
-  await db.trip.update({ where: { id }, data: { inviteToken, inviteRole: role } });
+  must(await u.sb.from("trips").update({ invite_token: inviteToken, invite_role: role }).eq("id", id));
   return NextResponse.json({ inviteToken, inviteRole: role });
 });

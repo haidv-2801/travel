@@ -1,36 +1,14 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { handler, parse, requireAdmin, HttpError } from "@/lib/http";
-import { destinationSchema } from "@/lib/validators";
-import { normalize } from "@/lib/text";
+import { createClient } from "@/lib/supabase/server";
+import { handler, HttpError, must } from "@/lib/http";
+import { destinationOut } from "@/lib/mappers";
 
-type P = { id: string };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export const GET = handler<P>(async (_req, { params }) => {
+export const GET = handler<{ id: string }>(async (_req, { params }) => {
   const { id } = await params;
-  const d = await db.destination.findFirst({ where: { OR: [{ id }, { slug: id }] }, include: { category: true } });
+  const sb = await createClient();
+  const d = must(await sb.from("destinations").select("*, categories(*)").eq(UUID.test(id) ? "id" : "slug", id).maybeSingle());
   if (!d) throw new HttpError(404, "Not found");
-  return NextResponse.json(d);
-});
-
-export const PATCH = handler<P>(async (req, { params }) => {
-  await requireAdmin();
-  const { id } = await params;
-  const data = await parse(req, destinationSchema.partial());
-  const cur = await db.destination.findUnique({ where: { id } });
-  if (!cur) throw new HttpError(404, "Not found");
-  const searchText = normalize(`${data.name ?? cur.name} ${data.city ?? cur.city}`);
-  return NextResponse.json(await db.destination.update({ where: { id }, data: { ...data, searchText } }));
-});
-
-export const DELETE = handler<P>(async (_req, { params }) => {
-  await requireAdmin();
-  const { id } = await params;
-  if (await db.tripItem.findFirst({ where: { destinationId: id } })) throw new HttpError(409, "Destination is used in trips");
-  try {
-    await db.destination.delete({ where: { id } });
-  } catch {
-    throw new HttpError(404, "Not found");
-  }
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(destinationOut(d));
 });

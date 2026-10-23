@@ -7,24 +7,6 @@ export const registerSchema = z.object({
 });
 export const loginSchema = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1) });
 
-export const destinationSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  slug: z.string().trim().regex(/^[a-z0-9-]+$/),
-  description: z.string().trim().min(1).max(2000),
-  city: z.string().trim().min(1),
-  region: z.string().trim().min(1),
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-  imageUrl: z.string().url().nullish(),
-  avgCost: z.number().int().min(0),
-  categoryId: z.string().min(1),
-});
-
-export const categorySchema = z.object({
-  name: z.string().trim().min(1).max(60),
-  slug: z.string().trim().regex(/^[a-z0-9-]+$/),
-});
-
 const dateStr = z.string().refine((s) => !Number.isNaN(Date.parse(s)), "Invalid date");
 export const tripSchema = z
   .object({

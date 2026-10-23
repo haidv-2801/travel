@@ -1,8 +1,11 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+// Seeds the public catalogue (categories + destinations). Needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
+import { createClient } from "@supabase/supabase-js";
 import { normalize } from "../src/lib/text";
 
-const prisma = new PrismaClient();
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!url || !key) throw new Error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (see .env.example)");
+const sb = createClient(url, key, { auth: { persistSession: false } });
 
 const categories = [
   { name: "Biển", slug: "bien" },
@@ -32,23 +35,18 @@ const places = [
 ] as const;
 
 async function main() {
-  for (const c of categories) {
-    await prisma.category.upsert({ where: { slug: c.slug }, update: {}, create: c });
-  }
-  for (const [name, slug, city, region, lat, lng, cat, avgCost, rating, description] of places) {
-    const category = await prisma.category.findUniqueOrThrow({ where: { slug: cat } });
-    await prisma.destination.upsert({
-      where: { slug },
-      update: { searchText: normalize(`${name} ${city}`) },
-      create: { searchText: normalize(`${name} ${city}`), name, slug, city, region, lat, lng, avgCost, rating, description, categoryId: category.id },
-    });
-  }
-  await prisma.user.upsert({
-    where: { email: "admin@tripmate.local" },
-    update: {},
-    create: { email: "admin@tripmate.local", name: "Admin", role: "ADMIN", passwordHash: await bcrypt.hash("admin12345", 10) },
-  });
-  console.log("Seeded.");
+  const { data: cats, error: ce } = await sb.from("categories").upsert(categories, { onConflict: "slug" }).select("id, slug");
+  if (ce) throw ce;
+  const idOf = Object.fromEntries(cats!.map((c) => [c.slug, c.id as string]));
+  const rows = places.map(([name, slug, city, region, lat, lng, cat, avgCost, rating, description]) => ({
+    name, slug, city, region, lat, lng, description, rating, avg_cost: avgCost, category_id: idOf[cat], search_text: normalize(`${name} ${city}`),
+  }));
+  const { error } = await sb.from("destinations").upsert(rows, { onConflict: "slug" });
+  if (error) throw error;
+  console.log(`Seeded ${categories.length} categories and ${rows.length} destinations.`);
 }
 
-main().finally(() => prisma.$disconnect());
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
