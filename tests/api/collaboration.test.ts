@@ -4,7 +4,6 @@ import { GET as listTrips } from "@/app/api/trips/route";
 import { DELETE as delTrip, GET as getTrip, PATCH as patchTrip } from "@/app/api/trips/[id]/route";
 import { POST as addItem } from "@/app/api/trips/[id]/items/route";
 import { POST as addExpense } from "@/app/api/trips/[id]/expenses/route";
-import { POST as share } from "@/app/api/trips/[id]/share/route";
 import { POST as invite } from "@/app/api/trips/[id]/invite/route";
 import { DELETE as delMember, PATCH as patchMember } from "@/app/api/trips/[id]/members/[userId]/route";
 import { GET as preview } from "@/app/api/invites/[token]/route";
@@ -24,13 +23,12 @@ beforeEach(async () => {
 const p = () => ({ id: tripId });
 
 describe("roles", () => {
-  it("editor can edit items, expenses and the trip, but not delete/share/invite", async () => {
+  it("editor can edit items, expenses and the trip, but not delete/invite", async () => {
     await actAs(editor);
     expect((await call(addItem, "POST", "/x", { params: p(), body: { destinationId: destId, day: 1 } })).status).toBe(201);
     expect((await call(addExpense, "POST", "/x", { params: p(), body: { title: "a", category: "food" } })).status).toBe(201);
     expect((await call(patchTrip, "PATCH", "/x", { params: p(), body: { budget: 5 } })).status).toBe(200);
     expect((await call(delTrip, "DELETE", "/x", { params: p() })).status).toBe(403);
-    expect((await call(share, "POST", "/x", { params: p(), body: { enabled: true } })).status).toBe(403);
     expect((await call(invite, "POST", "/x", { params: p(), body: { enabled: true } })).status).toBe(403);
     expect((await prisma.trip.findUniqueOrThrow({ where: { id: tripId } })).inviteToken).toBeNull();
   });

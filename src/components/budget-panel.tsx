@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { vnd } from "@/lib/api";
 import { EXPENSE_CATEGORIES } from "@/lib/validators";
 import { balances, settle } from "@/lib/split";
@@ -8,7 +7,6 @@ import { balances, settle } from "@/lib/split";
 export type Expense = { id: string; title: string; category: (typeof EXPENSE_CATEGORIES)[number]; planned: number; actual: number; paidById?: string | null; splitAmong?: string[]; shareAmounts?: Record<string, number> | null };
 export type Person = { id: string; name: string };
 const LABEL: Record<string, string> = { transport: "Di chuyển", food: "Ăn uống", lodging: "Lưu trú", tickets: "Vé tham quan", other: "Khác" };
-const COLORS = ["#0891b2", "#f59e0b", "#6366f1", "#10b981", "#94a3b8"];
 
 export function BudgetPanel({ budget, expenses, people, onAdd, onUpdate, onDelete, onBudget }: {
   budget: number; expenses: Expense[]; people: Person[];
@@ -28,11 +26,6 @@ export function BudgetPanel({ budget, expenses, people, onAdd, onUpdate, onDelet
   const planned = expenses.reduce((s, e) => s + e.planned, 0);
   const actual = expenses.reduce((s, e) => s + e.actual, 0);
   const remaining = budget - Math.max(planned, actual);
-  const byCat = EXPENSE_CATEGORIES.map((c, i) => ({
-    name: LABEL[c], color: COLORS[i],
-    planned: expenses.filter((e) => e.category === c).reduce((s, e) => s + e.planned, 0),
-    actual: expenses.filter((e) => e.category === c).reduce((s, e) => s + e.actual, 0),
-  }));
 
   return (
     <div className="space-y-4">
@@ -43,20 +36,6 @@ export function BudgetPanel({ budget, expenses, people, onAdd, onUpdate, onDelet
         <div className="card"><div className="label">Thực tế</div><div className="text-lg font-semibold">{vnd(actual)}</div></div>
         <div className={`card ${remaining < 0 ? "border-red-300 bg-red-50" : ""}`}><div className="label">Còn lại</div><div className={`text-lg font-semibold ${remaining < 0 ? "text-red-600" : "text-emerald-600"}`}>{vnd(remaining)}</div></div>
       </div>
-
-      {expenses.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="card h-64">
-            <ResponsiveContainer><PieChart><Pie data={byCat.filter((c) => c.actual + c.planned > 0)} dataKey={actual > 0 ? "actual" : "planned"} nameKey="name" outerRadius={80} label>
-              {byCat.filter((c) => c.actual + c.planned > 0).map((c) => <Cell key={c.name} fill={c.color} />)}
-            </Pie><Tooltip formatter={(v) => vnd(Number(v))} /></PieChart></ResponsiveContainer>
-          </div>
-          <div className="card h-64">
-            <ResponsiveContainer><BarChart data={byCat}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" fontSize={11} /><YAxis fontSize={11} tickFormatter={(v) => `${v / 1000}k`} /><Tooltip formatter={(v) => vnd(Number(v))} /><Legend />
-              <Bar dataKey="planned" name="Dự kiến" fill="#0891b2" /><Bar dataKey="actual" name="Thực tế" fill="#f59e0b" /></BarChart></ResponsiveContainer>
-          </div>
-        </div>
-      )}
 
       {people.length > 1 && (
         <div className="card space-y-2 text-sm">
